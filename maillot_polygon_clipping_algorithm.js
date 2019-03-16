@@ -1,11 +1,7 @@
-//const LEFT_CODE = 4;
-//const RIGHT_CODE = 1;
-//const BOTTOM_CODE = 8;
-//const TOP_CODE = 2;
-const LEFT_CODE = 8;
-const RIGHT_CODE = 4;
-const BOTTOM_CODE = 2;
-const TOP_CODE = 1;
+const LEFT_CODE = 4;
+const RIGHT_CODE = 1;
+const BOTTOM_CODE = 8;
+const TOP_CODE = 2;
 const TWO_DIGITS_CODE = 16;
 const TWO_DIGITS_MASK = LEFT_CODE + RIGHT_CODE + BOTTOM_CODE + TOP_CODE;
 
