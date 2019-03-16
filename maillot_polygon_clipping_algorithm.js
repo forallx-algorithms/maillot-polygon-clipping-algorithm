@@ -106,6 +106,8 @@ const maillotPolygonClipping = (polygon, windowA, windowB) => {
     const ymax = Math.max(windowA[1], windowB[1]);
 
     const clippingWindow = [[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax]];
+    // TODO: better naming
+    const tcc = [0, -3, -6, 1, 3, 0, 1, 0, 6, 1, 0, 0, 1, 0, 0, 0];
     const codeToTurningPoint = {3: 2, 6: 3, 9: 1, 12: 0};
 
     const output = [];
@@ -131,6 +133,13 @@ const maillotPolygonClipping = (polygon, windowA, windowB) => {
             if (!(startCode & TWO_DIGITS_CODE) && !(endCode & TWO_DIGITS_CODE) && startCode !== endCode) {
                 turningPointCode |= startCode | TWO_DIGITS_CODE;
             }
+
+            // 2-1 case
+            if ((startCode & TWO_DIGITS_CODE) && !(endCode & TWO_DIGITS_CODE) && (startCode & endCode) === 0) {
+                turningPointCode = startCode + tcc[endCode];
+            }
+
+            // 1-2 case
         }
 
         // Basic turning point test

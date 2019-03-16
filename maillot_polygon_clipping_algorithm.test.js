@@ -44,5 +44,12 @@ describe('maillotPolygonClipping', () => {
         const result = maillotPolygonClipping(polygon, clippingWindow[0], clippingWindow[2]);
         expect(result).to.eql(should);
     });
+
+    it('should generate turning point if start point in 2 bit region and end point in a 1 bit regions and they are & operation gives us zero', () => {
+        const polygon = [[4, 4], [8, 8], [-1, 4]];
+        const should = [[2, 4], [4, 4], [5, 5], [6, 5], [2, 5]];
+        const result = maillotPolygonClipping(polygon, clippingWindow[0], clippingWindow[2]);
+        expect(result).to.eql(should);
+    });
 });
 
