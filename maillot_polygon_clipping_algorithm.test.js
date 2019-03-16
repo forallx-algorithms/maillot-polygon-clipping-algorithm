@@ -30,5 +30,19 @@ describe('maillotPolygonClipping', () => {
         const result = maillotPolygonClipping(polygon, clippingWindow[0], clippingWindow[2]);
         expect(result).to.eql(should);
     });
+
+    it('should generate turning point if both points are in 1 bit regions but they codes arent the same', () => {
+        const polygon = [[3, 3], [0, 3], [3, 0]];
+        const should = [[3, 2], [3, 3], [2, 3], [2, 2]];
+        const result = maillotPolygonClipping(polygon, clippingWindow[0], clippingWindow[2]);
+        expect(result).to.eql(should);
+    });
+
+    it('should not generate turning point if both points are in 1 bit regions but they codes the same', () => {
+        const polygon = [[5, 3], [7, 3], [7, 5]];
+        const should = [[6, 4], [5, 3], [6, 3]];
+        const result = maillotPolygonClipping(polygon, clippingWindow[0], clippingWindow[2]);
+        expect(result).to.eql(should);
+    });
 });
 
