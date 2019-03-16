@@ -1,0 +1,15 @@
+{
+  "name": "maillot-polygon-clipping-algorithm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "maillot_polygon_clipping_algorithm.js",
+  "scripts": {
+    "test": "mocha *.test.js"
+  },
+  "author": "Evgeniy Kuznetsov",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^6.0.2"
+  }
+}
