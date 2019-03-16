@@ -105,11 +105,15 @@ const maillotPolygonClipping = (polygon, windowA, windowB) => {
     const ymin = Math.min(windowA[1], windowB[1]);
     const ymax = Math.max(windowA[1], windowB[1]);
 
+    const clippingWindow = [[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax]];
+    const codeToTurningPoint = {3: 2, 6: 3, 9: 1, 12: 0};
+
     const output = [];
 
     let startPoint = polygon[polygon.length - 1];
     for (let i = 0; i < polygon.length; i++) {
         const endPoint = polygon[i];
+        const endCode = calculateCodeForPoint(endPoint, xmin, xmax, ymin, ymax);
         const clipped = cohenSutherland2dLineClipping(startPoint, endPoint, xmin, xmax, ymin, ymax);
         if (clipped !== null) {
             if (clipped[0] != startPoint) {
@@ -121,6 +125,10 @@ const maillotPolygonClipping = (polygon, windowA, windowB) => {
         }
 
         // Basic turning point test
+        if (endCode & TWO_DIGITS_CODE) {
+            const turningPoint = clippingWindow[codeToTurningPoint[endCode & TWO_DIGITS_MASK]];
+            output.push(turningPoint);
+        }
 
         // Assign endPoint to startPoint
         startPoint = endPoint;

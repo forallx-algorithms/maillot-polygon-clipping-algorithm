@@ -24,15 +24,11 @@ describe('maillotPolygonClipping', () => {
         expect(result2).to.eql(should2);
     });
 
-    xit('should introduce turning point on basic turning point test', () => {
-        const polygon = [[3, 3], [7, 7], [6, 3]];
+    it('should introduce turning point on basic turning point test if start point in clipping window and end point is in the corner', () => {
+        const polygon = [[3, 3], [0, 6], [6, 6]];
+        const should = [[5, 5], [3, 3], [2, 4], [2, 5]];
         const result = maillotPolygonClipping(polygon, clippingWindow[0], clippingWindow[2]);
-        expect(result).to.eql(
-            polygon[0],
-            [4, 5],
-            polygon[2],
-            [6, 3]
-        );
+        expect(result).to.eql(should);
     });
 });
 
