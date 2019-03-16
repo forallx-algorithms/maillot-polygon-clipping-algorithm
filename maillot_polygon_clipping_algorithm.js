@@ -140,6 +140,11 @@ const maillotPolygonClipping = (polygon, windowA, windowB) => {
             }
 
             // 1-2 case
+            if (!(startCode & TWO_DIGITS_CODE) && (endCode & TWO_DIGITS_CODE) && (startCode & endCode) === 0) {
+                const aCode = endCode + tcc[startCode];
+                const turningPoint = clippingWindow[codeToTurningPoint[aCode & TWO_DIGITS_MASK]];
+                output.push(turningPoint);
+            }
         }
 
         // Basic turning point test
