@@ -117,7 +117,7 @@ const isToTheLeft = ([l1, l2], p) => {
 /**
  * TODO: doc
  */
-const getTurningPointFor22Case = (xmin, xmax, ymin, ymax, p1, p2) => {
+const getTurningPointFor22Case = (p1, p2, xmin, xmax, ymin, ymax) => {
     // TODO: separate points
     const d1 = [[xmax, ymin], [xmin, ymax]];
     const d2 = [[xmin, ymin], [xmax, ymax]];
@@ -175,7 +175,7 @@ const maillotPolygonClipping = (polygon, windowA, windowB) => {
                 isStart2Bit && isEnd2Bit && ((startCode & endCode) & TWO_BITS_MASK) === 0
             ) {
                 // 2-2 case
-                const turningPoint = getTurningPointFor22Case(xmin, xmax, ymin, ymax, startPoint, endPoint);
+                const turningPoint = getTurningPointFor22Case(startPoint, endPoint, xmin, xmax, ymin, ymax,);
                 output.push(turningPoint);
             } else if (!isStart2Bit && isEnd2Bit && (startCode & endCode) === 0) {
                 // 1-2 case
