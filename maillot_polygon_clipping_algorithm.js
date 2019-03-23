@@ -99,6 +99,30 @@ const cohenSutherland2dLineClipping = (g1, g2, xmin, xmax, ymin, ymax) => {
     };
 };
 
+const isToTheLeft = ([l1, l2], p) => {
+    const vl = [l2[0] - l1[0], l2[1] - l1[1]];
+    const vp = [p[0] - l1[0], p[1] - l1[1]];
+
+    return (vl[0] * vp[1]) > (vl[1] * vp[0]);
+};
+
+const getTurningPointFor22Case = (xmin, xmax, ymin, ymax, p1, p2) => {
+    const d1 = [[xmax, ymin], [xmin, ymax]];
+    const d2 = [[xmin, ymin], [xmax, ymax]];
+    const p1ToTheLeft = isToTheLeft(d1, p1);
+    const p2ToTheLeft = isToTheLeft(d1, p2);
+
+    if (p1ToTheLeft && p2ToTheLeft) {
+        return [xmin, ymin];
+	} else if (!p1ToTheLeft && !p2ToTheLeft) {
+		return [xmax, ymax];
+	} else if (isToTheLeft(d2, p1)) {
+		return [xmin, ymax];
+	} else {
+		return [xmax, ymin];
+	}
+};
+
 const maillotPolygonClipping = (polygon, windowA, windowB) => {
     const xmin = Math.min(windowA[0], windowB[0]);
     const xmax = Math.max(windowA[0], windowB[0]);
@@ -143,6 +167,15 @@ const maillotPolygonClipping = (polygon, windowA, windowB) => {
             if (!(startCode & TWO_DIGITS_CODE) && (endCode & TWO_DIGITS_CODE) && (startCode & endCode) === 0) {
                 const aCode = endCode + tcc[startCode];
                 const turningPoint = clippingWindow[codeToTurningPoint[aCode & TWO_DIGITS_MASK]];
+                output.push(turningPoint);
+            }
+
+            // 2-2 case
+            if (
+                (startCode & TWO_DIGITS_CODE) && (endCode & TWO_DIGITS_CODE) &&
+                ((startCode & endCode) & TWO_DIGITS_MASK) === 0
+            ) {
+                const turningPoint = getTurningPointFor22Case(xmin, xmax, ymin, ymax, startPoint, endPoint);
                 output.push(turningPoint);
             }
         }

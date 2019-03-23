@@ -58,5 +58,31 @@ describe('maillotPolygonClipping', () => {
         const result = maillotPolygonClipping(polygon, clippingWindow[0], clippingWindow[2]);
         expect(result).to.eql(should);
     });
+
+    it('should generate turning point for a 2-2 bit case', () => {
+        const polygon1 = [[4, 4], [1, 11], [12, 1]];
+        const result1 = maillotPolygonClipping(polygon1, clippingWindow[0], clippingWindow[2]);
+        expect(result1.length).to.eql(6);
+        expect(result1[4]).to.eql([6, 5]);
+        expect(result1[5]).to.eql([6, 2]);
+
+        const polygon2 = [[4, 3], [7, -4], [-4, 6]];
+        const result2 = maillotPolygonClipping(polygon2, clippingWindow[0], clippingWindow[2]);
+        expect(result2.length).to.eql(6);
+        expect(result2[4]).to.eql([2, 2]);
+        expect(result2[5]).to.eql([2, 5]);
+
+        const polygon3 = [[4, 3], [12, 6], [1, -4]];
+        const result3 = maillotPolygonClipping(polygon3, clippingWindow[0], clippingWindow[2]);
+        expect(result3.length).to.eql(6);
+        expect(result3[4]).to.eql([6, 2]);
+        expect(result3[5]).to.eql([2, 2]);
+
+        const polygon4 = [[4, 4], [-4, 1], [7, 11]];
+        const result4 = maillotPolygonClipping(polygon4, clippingWindow[0], clippingWindow[2]);
+        expect(result4.length).to.eql(6);
+        expect(result4[4]).to.eql([2, 5]);
+        expect(result4[5]).to.eql([6, 5]);
+    });
 });
 
