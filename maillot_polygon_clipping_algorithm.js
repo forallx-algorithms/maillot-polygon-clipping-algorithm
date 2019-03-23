@@ -2,9 +2,12 @@ const LEFT_CODE = 4;
 const RIGHT_CODE = 1;
 const BOTTOM_CODE = 8;
 const TOP_CODE = 2;
-const TWO_DIGITS_CODE = 16;
-const TWO_DIGITS_MASK = LEFT_CODE + RIGHT_CODE + BOTTOM_CODE + TOP_CODE;
+const TWO_BITS_CODE = 16;
+const TWO_BITS_MASK = LEFT_CODE + RIGHT_CODE + BOTTOM_CODE + TOP_CODE;
 
+/**
+ * TODO: doc
+ */
 const calculateLineintersection = (g1, g2, t1, t2) => {
     const a1 = g2[1] - g1[1];
     const b1 = g1[0] - g2[0];
@@ -26,28 +29,6 @@ const calculateLineintersection = (g1, g2, t1, t2) => {
 };
 
 /**
- * @param {number} code Code for a point
- * @param {[number, number]} g1 First point of a line
- * @param {[number, number]} g2 Second point of a line
- * @param {number} xmin Minimum x value of the clipping window
- * @param {number} xmax Maximum x value of the clipping window
- * @param {number} ymin Minimum y value of the clipping window
- * @param {number} ymax Maximum y value of the clipping window
- * @returns {[number, number]} Intersection point
- */
-const clipLineByCode = (code, g1, g2, xmin, xmax, ymin, ymax) => {
-    if ((code & LEFT_CODE) !== 0) {
-        return calculateLineintersection(g1, g2, [xmin, ymin], [xmin, ymax]);
-    } else if ((code & RIGHT_CODE) !== 0) {
-        return calculateLineintersection(g1, g2, [xmax, ymin], [xmax, ymax]);
-    } else if ((code & BOTTOM_CODE) !== 0) {
-        return calculateLineintersection(g1, g2, [xmin, ymin], [xmax, ymin]);
-    } else {
-        return calculateLineintersection(g1, g2, [xmin, ymax], [xmax, ymax]);
-    }
-};
-
-/**
  * @param {[number, number]} p Point
  * @param {number} xmin Minimum x value of the clipping window
  * @param {number} xmax Maximum x value of the clipping window
@@ -64,25 +45,48 @@ const calculateCodeForPoint = (p, xmin, xmax, ymin, ymax) => {
 
     if (p[1] < ymin || p[1] > ymax) {
         result |= (p[1] < ymin ? BOTTOM_CODE : TOP_CODE) |
-            (result > 0 ? TWO_DIGITS_CODE : 0);
+            (result > 0 ? TWO_BITS_CODE : 0);
     }
 
     return result;
 };
 
-
 /**
- * TODO: doc
+ * @param {number} code Code for a point
  * @param {[number, number]} g1 First point of a line
  * @param {[number, number]} g2 Second point of a line
- * @param {[number, number]} windowA First point of the window
- * @param {[number, number]} windowB Second point of the window
+ * @param {number} xmin Minimum x value of the clipping window
+ * @param {number} xmax Maximum x value of the clipping window
+ * @param {number} ymin Minimum y value of the clipping window
+ * @param {number} ymax Maximum y value of the clipping window
+ * @returns {[number, number]} Intersection point
+ */
+const clipLineByCode = (code, g1, g2, xmin, xmax, ymin, ymax) => {
+    if (code & LEFT_CODE) {
+        return calculateLineintersection(g1, g2, [xmin, ymin], [xmin, ymax]);
+    } else if (code & RIGHT_CODE) {
+        return calculateLineintersection(g1, g2, [xmax, ymin], [xmax, ymax]);
+    } else if (code & BOTTOM_CODE) {
+        return calculateLineintersection(g1, g2, [xmin, ymin], [xmax, ymin]);
+    } else {
+        return calculateLineintersection(g1, g2, [xmin, ymax], [xmax, ymax]);
+    }
+};
+
+/**
+ * Cohen-Sutherland 2d line clipper is used as a clipping routine
+ * See https://github.com/forallx-algorithms/cohen-sutherland-2d-line-clipping
+ * @param {[number, number]} g1 First point of a line
+ * @param {[number, number]} g2 Second point of a line
+ * @param {number} xmin Minimum x value of the clipping window
+ * @param {number} xmax Maximum x value of the clipping window
+ * @param {number} ymin Minimum y value of the clipping window
+ * @param {number} ymax Maximum y value of the clipping window
  * @returns {[[number, number], [number, number]] | null} clipped line or null if line is completely outside clipping window
  */
 const cohenSutherland2dLineClipping = (g1, g2, xmin, xmax, ymin, ymax) => {
-    // TODO: compute masked code?
-    let g1code = calculateCodeForPoint(g1, xmin, xmax, ymin, ymax) & TWO_DIGITS_MASK;
-    let g2code = calculateCodeForPoint(g2, xmin, xmax, ymin, ymax) & TWO_DIGITS_MASK;
+    let g1code = calculateCodeForPoint(g1, xmin, xmax, ymin, ymax) & TWO_BITS_MASK;
+    let g2code = calculateCodeForPoint(g2, xmin, xmax, ymin, ymax) & TWO_BITS_MASK;
 
     while (true) {
         if ((g1code | g2code) === 0) {
@@ -91,22 +95,30 @@ const cohenSutherland2dLineClipping = (g1, g2, xmin, xmax, ymin, ymax) => {
             return null;
         } else if (g1code !== 0) {
             g1 = clipLineByCode(g1code, g1, g2, xmin, xmax, ymin, ymax);
-            g1code = calculateCodeForPoint(g1, xmin, xmax, ymin, ymax) & TWO_DIGITS_MASK;
+            g1code = calculateCodeForPoint(g1, xmin, xmax, ymin, ymax) & TWO_BITS_MASK;
         } else {
             g2 = clipLineByCode(g2code, g1, g2, xmin, xmax, ymin, ymax);
-            g2code = calculateCodeForPoint(g2, xmin, xmax, ymin, ymax) & TWO_DIGITS_MASK;
+            g2code = calculateCodeForPoint(g2, xmin, xmax, ymin, ymax) & TWO_BITS_MASK;
         }
     };
 };
 
+/**
+ * TODO: doc
+ */
 const isToTheLeft = ([l1, l2], p) => {
+    // TODO: SUB
     const vl = [l2[0] - l1[0], l2[1] - l1[1]];
     const vp = [p[0] - l1[0], p[1] - l1[1]];
 
     return (vl[0] * vp[1]) > (vl[1] * vp[0]);
 };
 
+/**
+ * TODO: doc
+ */
 const getTurningPointFor22Case = (xmin, xmax, ymin, ymax, p1, p2) => {
+    // TODO: separate points
     const d1 = [[xmax, ymin], [xmin, ymax]];
     const d2 = [[xmin, ymin], [xmax, ymax]];
     const p1ToTheLeft = isToTheLeft(d1, p1);
@@ -123,6 +135,9 @@ const getTurningPointFor22Case = (xmin, xmax, ymin, ymax, p1, p2) => {
 	}
 };
 
+/**
+ * TODO: doc
+ */
 const maillotPolygonClipping = (polygon, windowA, windowB) => {
     const xmin = Math.min(windowA[0], windowB[0]);
     const xmax = Math.max(windowA[0], windowB[0]);
@@ -130,21 +145,21 @@ const maillotPolygonClipping = (polygon, windowA, windowB) => {
     const ymax = Math.max(windowA[1], windowB[1]);
 
     const clippingWindow = [[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax]];
-    // TODO: better naming
-    const tcc = [0, -3, -6, 1, 3, 0, 1, 0, 6, 1, 0, 0, 1, 0, 0, 0];
+    const turningPointOffset = {1: -3, 2: -6, 4: 3, 8: 6};
     const codeToTurningPoint = {3: 2, 6: 3, 9: 1, 12: 0};
 
     const output = [];
 
     let startPoint = polygon[polygon.length - 1];
+    let startCode = calculateCodeForPoint(startPoint, xmin, xmax, ymin, ymax);
+    let turningPointCode;
     for (let i = 0; i < polygon.length; i++) {
         const endPoint = polygon[i];
-
-        const startCode = calculateCodeForPoint(startPoint, xmin, xmax, ymin, ymax);
         const endCode = calculateCodeForPoint(endPoint, xmin, xmax, ymin, ymax);
         // TODO: mb function for turning points?
-        let turningPointCode = endCode;
+        turningPointCode = endCode;
 
+        // TODO: mb pass codes
         const clipped = cohenSutherland2dLineClipping(startPoint, endPoint, xmin, xmax, ymin, ymax);
         if (clipped !== null) {
             if (clipped[0] != startPoint) {
@@ -153,41 +168,37 @@ const maillotPolygonClipping = (polygon, windowA, windowB) => {
             output.push(clipped[1]);
         } else {
             // Resolve cases
-            // 1-1 case
-            if (!(startCode & TWO_DIGITS_CODE) && !(endCode & TWO_DIGITS_CODE) && startCode !== endCode) {
-                turningPointCode |= startCode | TWO_DIGITS_CODE;
-            }
+            const isStart2Bit = startCode & TWO_BITS_CODE;
+            const isEnd2Bit = endCode & TWO_BITS_CODE;
 
-            // 2-1 case
-            if ((startCode & TWO_DIGITS_CODE) && !(endCode & TWO_DIGITS_CODE) && (startCode & endCode) === 0) {
-                turningPointCode = startCode + tcc[endCode];
-            }
-
-            // 1-2 case
-            if (!(startCode & TWO_DIGITS_CODE) && (endCode & TWO_DIGITS_CODE) && (startCode & endCode) === 0) {
-                const aCode = endCode + tcc[startCode];
-                const turningPoint = clippingWindow[codeToTurningPoint[aCode & TWO_DIGITS_MASK]];
-                output.push(turningPoint);
-            }
-
-            // 2-2 case
             if (
-                (startCode & TWO_DIGITS_CODE) && (endCode & TWO_DIGITS_CODE) &&
-                ((startCode & endCode) & TWO_DIGITS_MASK) === 0
+                isStart2Bit && isEnd2Bit && ((startCode & endCode) & TWO_BITS_MASK) === 0
             ) {
+                // 2-2 case
                 const turningPoint = getTurningPointFor22Case(xmin, xmax, ymin, ymax, startPoint, endPoint);
                 output.push(turningPoint);
+            } else if (!isStart2Bit && isEnd2Bit && (startCode & endCode) === 0) {
+                // 1-2 case
+                const code = endCode + turningPointOffset[startCode];
+                const turningPoint = clippingWindow[codeToTurningPoint[code & TWO_BITS_MASK]];
+                output.push(turningPoint);
+            } else if (isStart2Bit && !isEnd2Bit && (startCode & endCode) === 0) {
+                // 2-1 case
+                turningPointCode = startCode + turningPointOffset[endCode];
+            } else if (!isStart2Bit && !isEnd2Bit && startCode !== endCode) {
+                // 1-1 case
+                turningPointCode |= startCode | TWO_BITS_CODE;
             }
         }
 
         // Basic turning point test
-        if (turningPointCode & TWO_DIGITS_CODE) {
-            const turningPoint = clippingWindow[codeToTurningPoint[turningPointCode & TWO_DIGITS_MASK]];
+        if (turningPointCode & TWO_BITS_CODE) {
+            const turningPoint = clippingWindow[codeToTurningPoint[turningPointCode & TWO_BITS_MASK]];
             output.push(turningPoint);
         }
 
-        // Assign endPoint to startPoint
         startPoint = endPoint;
+        startCode = endCode;
     }
 
     return output;
