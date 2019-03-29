@@ -31,28 +31,28 @@ describe('maillotPolygonClipping', () => {
         expect(result).to.eql(should);
     });
 
-    it('should generate turning point if both points are in 1 bit regions but they codes arent the same', () => {
+    it('should generate turning point for 1-1 bit case', () => {
         const polygon = [[3, 3], [0, 3], [3, 0]];
         const should = [[3, 2], [3, 3], [2, 3], [2, 2]];
         const result = maillotPolygonClipping(polygon, clippingWindow[0], clippingWindow[2]);
         expect(result).to.eql(should);
     });
 
-    it('should not generate turning point if both points are in 1 bit regions but they codes the same', () => {
+    it('should not generate turning point 1-1 bit case if codes the same', () => {
         const polygon = [[5, 3], [7, 3], [7, 5]];
         const should = [[6, 4], [5, 3], [6, 3]];
         const result = maillotPolygonClipping(polygon, clippingWindow[0], clippingWindow[2]);
         expect(result).to.eql(should);
     });
 
-    it('should generate turning point if start point in 2 bit region and end point in a 1 bit regions and they are & operation gives us zero', () => {
+    it('should generate turning point for 2-1 bit case', () => {
         const polygon = [[4, 4], [8, 8], [-1, 4]];
         const should = [[2, 4], [4, 4], [5, 5], [6, 5], [2, 5]];
         const result = maillotPolygonClipping(polygon, clippingWindow[0], clippingWindow[2]);
         expect(result).to.eql(should);
     });
 
-    it('should generate turning point if start point in 1 bit region and end point in a 2 bit region and they & operation gives us zero', () => {
+    it('should generate turning point for 1-2 bit case', () => {
         const polygon = [[-1, 4], [8, 8], [4, 4]];
         const should = [[2, 4], [2, 5], [6, 5], [5, 5], [4, 4]];
         const result = maillotPolygonClipping(polygon, clippingWindow[0], clippingWindow[2]);
