@@ -6,7 +6,116 @@ const TWO_BITS_CODE = 16;
 const TWO_BITS_MASK = LEFT_CODE + RIGHT_CODE + BOTTOM_CODE + TOP_CODE;
 
 /**
- * TODO: doc
+ * Maillot polygon clipping algorithm
+ * Clips polygon by a rectangular clipping window
+ * @param {[number, number][]} polygon
+ * @param {[number, number]} windowA Point on a window diagonal
+ * @param {[number, number]} windowB Complementary point on a window diagonal
+ * @returns {[number, number][]} Clipped polygon
+ */
+const maillotPolygonClipping = (polygon, windowA, windowB) => {
+    const xmin = Math.min(windowA[0], windowB[0]);
+    const xmax = Math.max(windowA[0], windowB[0]);
+    const ymin = Math.min(windowA[1], windowB[1]);
+    const ymax = Math.max(windowA[1], windowB[1]);
+
+    const clippingWindow = [[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax]];
+    const turningPointOffset = {1: -3, 2: -6, 4: 3, 8: 6};
+    const codeToTurningPoint = {3: 2, 6: 3, 9: 1, 12: 0};
+
+    const output = [];
+
+    let startPoint = polygon[polygon.length - 1];
+    let startCode = calculateCodeForPoint(startPoint, xmin, xmax, ymin, ymax);
+    let turningPointCode;
+    for (let i = 0; i < polygon.length; i++) {
+        const endPoint = polygon[i];
+        const endCode = calculateCodeForPoint(endPoint, xmin, xmax, ymin, ymax);
+        turningPointCode = endCode;
+
+        const clipped = cohenSutherland2dLineClipping(startPoint, endPoint, xmin, xmax, ymin, ymax);
+        if (clipped !== null) {
+            if (clipped[0] != startPoint) {
+                output.push(clipped[0]);
+            }
+            output.push(clipped[1]);
+        } else {
+            // Resolve cases
+            const isStart2Bit = startCode & TWO_BITS_CODE;
+            const isEnd2Bit = endCode & TWO_BITS_CODE;
+
+            if (
+                isStart2Bit && isEnd2Bit && ((startCode & endCode) & TWO_BITS_MASK) === 0
+            ) {
+                // 2-2 case
+                const turningPoint = getTurningPointFor22Case(startPoint, endPoint, xmin, xmax, ymin, ymax,);
+                output.push(turningPoint);
+            } else if (!isStart2Bit && isEnd2Bit && (startCode & endCode) === 0) {
+                // 1-2 case
+                const code = endCode + turningPointOffset[startCode];
+                const turningPoint = clippingWindow[codeToTurningPoint[code & TWO_BITS_MASK]];
+                output.push(turningPoint);
+            } else if (isStart2Bit && !isEnd2Bit && (startCode & endCode) === 0) {
+                // 2-1 case
+                turningPointCode = startCode + turningPointOffset[endCode];
+            } else if (!isStart2Bit && !isEnd2Bit && startCode !== endCode) {
+                // 1-1 case
+                turningPointCode |= startCode | TWO_BITS_CODE;
+            }
+        }
+
+        // Basic turning point test
+        if (turningPointCode & TWO_BITS_CODE) {
+            const turningPoint = clippingWindow[codeToTurningPoint[turningPointCode & TWO_BITS_MASK]];
+            output.push(turningPoint);
+        }
+
+        startPoint = endPoint;
+        startCode = endCode;
+    }
+
+    return output;
+};
+
+/**
+ * Is point to the left of the line
+ * @param {[[number, number][number, number]]} line
+ * @param {[number, number]} p Point
+ * @returns {boolean} true - to the left, false otherwise
+ */
+const isToTheLeft = ([l1, l2], p) => {
+    const vl = [l2[0] - l1[0], l2[1] - l1[1]];
+    const vp = [p[0] - l1[0], p[1] - l1[1]];
+
+    return (vl[0] * vp[1]) > (vl[1] * vp[0]);
+};
+
+/**
+ * Resolve 2-2 bit case
+ */
+const getTurningPointFor22Case = (p1, p2, xmin, xmax, ymin, ymax) => {
+    const d1 = [[xmax, ymin], [xmin, ymax]];
+    const d2 = [[xmin, ymin], [xmax, ymax]];
+    const p1ToTheLeft = isToTheLeft(d1, p1);
+    const p2ToTheLeft = isToTheLeft(d1, p2);
+
+    if (p1ToTheLeft && p2ToTheLeft) {
+        return [xmin, ymin];
+	} else if (!p1ToTheLeft && !p2ToTheLeft) {
+		return [xmax, ymax];
+	} else if (isToTheLeft(d2, p1)) {
+		return [xmin, ymax];
+	} else {
+		return [xmax, ymin];
+	}
+};
+
+/**
+ * @param {[number, number]} g1 Point on a line 1
+ * @param {[number, number]} g2 Point on a line 1
+ * @param {[number, number]} t1 Point on a line 2
+ * @param {[number, number]} t2 Point on a line 2
+ * @returns {[number, number]} Intersection point
  */
 const calculateLineintersection = (g1, g2, t1, t2) => {
     const a1 = g2[1] - g1[1];
@@ -101,107 +210,6 @@ const cohenSutherland2dLineClipping = (g1, g2, xmin, xmax, ymin, ymax) => {
             g2code = calculateCodeForPoint(g2, xmin, xmax, ymin, ymax) & TWO_BITS_MASK;
         }
     };
-};
-
-/**
- * TODO: doc
- */
-const isToTheLeft = ([l1, l2], p) => {
-    // TODO: SUB
-    const vl = [l2[0] - l1[0], l2[1] - l1[1]];
-    const vp = [p[0] - l1[0], p[1] - l1[1]];
-
-    return (vl[0] * vp[1]) > (vl[1] * vp[0]);
-};
-
-/**
- * TODO: doc
- */
-const getTurningPointFor22Case = (p1, p2, xmin, xmax, ymin, ymax) => {
-    // TODO: separate points
-    const d1 = [[xmax, ymin], [xmin, ymax]];
-    const d2 = [[xmin, ymin], [xmax, ymax]];
-    const p1ToTheLeft = isToTheLeft(d1, p1);
-    const p2ToTheLeft = isToTheLeft(d1, p2);
-
-    if (p1ToTheLeft && p2ToTheLeft) {
-        return [xmin, ymin];
-	} else if (!p1ToTheLeft && !p2ToTheLeft) {
-		return [xmax, ymax];
-	} else if (isToTheLeft(d2, p1)) {
-		return [xmin, ymax];
-	} else {
-		return [xmax, ymin];
-	}
-};
-
-/**
- * TODO: doc
- */
-const maillotPolygonClipping = (polygon, windowA, windowB) => {
-    const xmin = Math.min(windowA[0], windowB[0]);
-    const xmax = Math.max(windowA[0], windowB[0]);
-    const ymin = Math.min(windowA[1], windowB[1]);
-    const ymax = Math.max(windowA[1], windowB[1]);
-
-    const clippingWindow = [[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax]];
-    const turningPointOffset = {1: -3, 2: -6, 4: 3, 8: 6};
-    const codeToTurningPoint = {3: 2, 6: 3, 9: 1, 12: 0};
-
-    const output = [];
-
-    let startPoint = polygon[polygon.length - 1];
-    let startCode = calculateCodeForPoint(startPoint, xmin, xmax, ymin, ymax);
-    let turningPointCode;
-    for (let i = 0; i < polygon.length; i++) {
-        const endPoint = polygon[i];
-        const endCode = calculateCodeForPoint(endPoint, xmin, xmax, ymin, ymax);
-        // TODO: mb function for turning points?
-        turningPointCode = endCode;
-
-        // TODO: mb pass codes
-        const clipped = cohenSutherland2dLineClipping(startPoint, endPoint, xmin, xmax, ymin, ymax);
-        if (clipped !== null) {
-            if (clipped[0] != startPoint) {
-                output.push(clipped[0]);
-            }
-            output.push(clipped[1]);
-        } else {
-            // Resolve cases
-            const isStart2Bit = startCode & TWO_BITS_CODE;
-            const isEnd2Bit = endCode & TWO_BITS_CODE;
-
-            if (
-                isStart2Bit && isEnd2Bit && ((startCode & endCode) & TWO_BITS_MASK) === 0
-            ) {
-                // 2-2 case
-                const turningPoint = getTurningPointFor22Case(startPoint, endPoint, xmin, xmax, ymin, ymax,);
-                output.push(turningPoint);
-            } else if (!isStart2Bit && isEnd2Bit && (startCode & endCode) === 0) {
-                // 1-2 case
-                const code = endCode + turningPointOffset[startCode];
-                const turningPoint = clippingWindow[codeToTurningPoint[code & TWO_BITS_MASK]];
-                output.push(turningPoint);
-            } else if (isStart2Bit && !isEnd2Bit && (startCode & endCode) === 0) {
-                // 2-1 case
-                turningPointCode = startCode + turningPointOffset[endCode];
-            } else if (!isStart2Bit && !isEnd2Bit && startCode !== endCode) {
-                // 1-1 case
-                turningPointCode |= startCode | TWO_BITS_CODE;
-            }
-        }
-
-        // Basic turning point test
-        if (turningPointCode & TWO_BITS_CODE) {
-            const turningPoint = clippingWindow[codeToTurningPoint[turningPointCode & TWO_BITS_MASK]];
-            output.push(turningPoint);
-        }
-
-        startPoint = endPoint;
-        startCode = endCode;
-    }
-
-    return output;
 };
 
 module.exports = {
